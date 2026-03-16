@@ -1,6 +1,6 @@
 # Enhancr
 
-A browser-based image enhancement tool with real-time filter previews and non-blocking export. No uploads, no server — everything runs locally in your browser.
+A browser-based image enhancement tool with real-time filter previews and non-blocking export. No uploads, no server, everything runs locally in your browser.
 
 **Live demo:** https://viveknaskar.github.io/enhancr/
 
