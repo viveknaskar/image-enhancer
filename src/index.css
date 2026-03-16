@@ -1,3 +1,49 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom slider styling */
+input[type='range'] {
+  @apply w-full h-1.5 rounded-full appearance-none cursor-pointer;
+  background: transparent;
+}
+
+input[type='range']::-webkit-slider-runnable-track {
+  @apply h-1.5 rounded-full;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  @apply w-4 h-4 rounded-full cursor-pointer;
+  margin-top: -5px;
+  background: linear-gradient(135deg, #a78bfa, #7c3aed);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25);
+  transition: box-shadow 0.15s ease;
+}
+
+input[type='range']::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 0 5px rgba(139, 92, 246, 0.35);
+}
+
+input[type='range']::-moz-range-track {
+  @apply h-1.5 rounded-full;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+input[type='range']::-moz-range-thumb {
+  @apply w-4 h-4 rounded-full border-0 cursor-pointer;
+  background: linear-gradient(135deg, #a78bfa, #7c3aed);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25);
+}
+
+/* Animated dashed border for drop zone */
+@keyframes dash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+.drop-zone-active {
+  background: rgba(139, 92, 246, 0.08);
+}
