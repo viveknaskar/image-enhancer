@@ -13,6 +13,8 @@ interface ImageState {
 
 function App() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [imageType, setImageType] = useState<string>('image/jpeg');
+  const [isProcessing, setIsProcessing] = useState(false);
   const [filters, setFilters] = useState<ImageState>({
     brightness: 100,
     contrast: 100,
@@ -23,27 +25,24 @@ function App() {
     quality: 90
   });
 
+  const loadImageFromFile = (file: File) => {
+    setImageType(file.type);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setSelectedImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+    if (file) loadImageFromFile(file);
   };
 
   const handleDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     const file = event.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+    if (file && file.type.startsWith('image/')) loadImageFromFile(file);
   }, []);
 
   const handleDragOver = useCallback((event: React.DragEvent) => {
@@ -57,7 +56,7 @@ function App() {
   const getFilterStyle = () => {
     // Convert sharpen value to a matrix filter
     const sharpenMatrix = filters.sharpen > 0 ? `url(data:image/svg+xml;base64,${btoa(`
-      <svg xmlns="http://www.w3.org/svg/2000">
+      <svg xmlns="http://www.w3.org/2000/svg">
         <filter id="sharpen">
           <feConvolveMatrix order="3" preserveAlpha="true" kernelMatrix="
             0 -${filters.sharpen} 0
@@ -79,71 +78,55 @@ function App() {
     };
   };
 
-  const applyNoiseReduction = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
-    if (filters.denoise === 0) return;
-    
-    const imageData = ctx.getImageData(0, 0, width, height);
-    const data = imageData.data;
-    const strength = filters.denoise / 100;
-
-    for (let i = 0; i < data.length; i += 4) {
-      const area = [];
-      // Collect neighboring pixels
-      for (let y = -1; y <= 1; y++) {
-        for (let x = -1; x <= 1; x++) {
-          const idx = i + (y * width + x) * 4;
-          if (idx >= 0 && idx < data.length) {
-            area.push({
-              r: data[idx],
-              g: data[idx + 1],
-              b: data[idx + 2]
-            });
-          }
-        }
-      }
-
-      // Calculate median values
-      const medianR = area.map(p => p.r).sort((a, b) => a - b)[Math.floor(area.length / 2)];
-      const medianG = area.map(p => p.g).sort((a, b) => a - b)[Math.floor(area.length / 2)];
-      const medianB = area.map(p => p.b).sort((a, b) => a - b)[Math.floor(area.length / 2)];
-
-      // Apply median filter with strength
-      data[i] = data[i] * (1 - strength) + medianR * strength;
-      data[i + 1] = data[i + 1] * (1 - strength) + medianG * strength;
-      data[i + 2] = data[i + 2] * (1 - strength) + medianB * strength;
-    }
-
-    ctx.putImageData(imageData, 0, 0);
+  const applyDenoiseInWorker = (imageData: ImageData, strength: number): Promise<ImageData> => {
+    return new Promise((resolve) => {
+      const worker = new Worker(new URL('./denoise.worker.ts', import.meta.url), { type: 'module' });
+      worker.onmessage = (e) => {
+        resolve(new ImageData(e.data.data, imageData.width, imageData.height));
+        worker.terminate();
+      };
+      // Transfer buffer to avoid copying
+      const copy = new Uint8ClampedArray(imageData.data);
+      worker.postMessage({ data: copy, width: imageData.width, height: imageData.height, strength }, [copy.buffer]);
+    });
   };
 
-  const downloadImage = () => {
+  const downloadImage = async () => {
     if (!selectedImage) return;
+    setIsProcessing(true);
 
     const canvas = document.createElement('canvas');
     const img = new Image();
     img.src = selectedImage;
-    
-    img.onload = () => {
-      // Set canvas size to match image dimensions
+
+    img.onload = async () => {
       canvas.width = img.width;
       canvas.height = img.height;
       const ctx = canvas.getContext('2d')!;
 
-      // Apply filters
       ctx.filter = getFilterStyle().filter;
       ctx.drawImage(img, 0, 0);
+      ctx.filter = 'none';
 
-      // Apply noise reduction
-      applyNoiseReduction(ctx, canvas.width, canvas.height);
+      if (filters.denoise > 0) {
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const denoised = await applyDenoiseInWorker(imageData, filters.denoise / 100);
+        ctx.putImageData(denoised, 0, 0);
+      }
 
-      // Convert to high-quality JPEG
-      const enhancedImage = canvas.toDataURL('image/jpeg', filters.quality / 100);
-      
-      // Create download link
+      // Preserve transparency for PNG/WebP/GIF; use JPEG for everything else
+      const supportsAlpha = ['image/png', 'image/webp', 'image/gif'].includes(imageType);
+      const mimeType = supportsAlpha ? 'image/png' : 'image/jpeg';
+      const quality = supportsAlpha ? undefined : filters.quality / 100;
+      const ext = supportsAlpha ? 'png' : 'jpg';
+
+      const enhancedImage = canvas.toDataURL(mimeType, quality);
       const link = document.createElement('a');
-      link.download = 'enhanced-image.jpg';
+      link.download = `enhanced-image.${ext}`;
       link.href = enhancedImage;
       link.click();
+
+      setIsProcessing(false);
     };
   };
 
@@ -326,15 +309,15 @@ function App() {
 
             <button
               onClick={downloadImage}
-              disabled={!selectedImage}
+              disabled={!selectedImage || isProcessing}
               className={`w-full py-3 rounded-lg flex items-center justify-center space-x-2 ${
-                selectedImage
+                selectedImage && !isProcessing
                   ? 'bg-purple-600 hover:bg-purple-700 text-white'
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               } transition`}
             >
               <Download className="w-5 h-5" />
-              <span>Download Enhanced Image</span>
+              <span>{isProcessing ? 'Processing…' : 'Download Enhanced Image'}</span>
             </button>
           </div>
         </div>
