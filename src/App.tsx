@@ -73,6 +73,7 @@ function App() {
   const [imageType, setImageType] = useState<string>('image/jpeg');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [fileName, setFileName] = useState('enhanced-image');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [filters, setFilters] = useState<ImageState>(DEFAULTS);
 
@@ -168,7 +169,8 @@ function App() {
       const ext = supportsAlpha ? 'png' : 'jpg';
 
       const link = document.createElement('a');
-      link.download = `enhanced-image.${ext}`;
+      const safeName = fileName.trim() || 'enhanced-image';
+      link.download = `${safeName}.${ext}`;
       link.href = canvas.toDataURL(mimeType, quality);
       link.click();
 
@@ -272,6 +274,22 @@ function App() {
             <div>
               <SectionHeader icon={<Sliders className="w-3.5 h-3.5" />} label="Export Quality" />
               <SliderRow label="JPEG Quality" value={filters.quality} displayValue={`${filters.quality}%`} min={1} max={100} onChange={v => handleFilterChange('quality', v)} />
+            </div>
+
+            <div>
+              <SectionHeader icon={<Download className="w-3.5 h-3.5" />} label="File Name" />
+              <div className="flex items-center gap-2 bg-black/20 border border-white/10 rounded-xl px-3 py-2 focus-within:border-violet-500/60 transition-colors">
+                <input
+                  type="text"
+                  value={fileName}
+                  onChange={(e) => setFileName(e.target.value)}
+                  placeholder="enhanced-image"
+                  className="flex-1 bg-transparent text-sm text-slate-200 placeholder-slate-500 outline-none"
+                />
+                <span className="text-xs text-slate-500 shrink-0">
+                  .{['image/png', 'image/webp', 'image/gif'].includes(imageType) ? 'png' : 'jpg'}
+                </span>
+              </div>
             </div>
 
             <div className="mt-auto flex gap-3">
