@@ -193,7 +193,7 @@ function App() {
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-violet-600/20 border border-violet-500/30 mb-4">
             <ImageIcon className="w-6 h-6 text-violet-400" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Image Enhancer Pro</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-white">Enhancr</h1>
           <p className="mt-1 text-slate-400 text-sm">Upload an image and enhance it with real-time filters</p>
         </div>
 

@@ -1,4 +1,4 @@
-# Image Enhancer Pro
+# Enhancr
 
 A modern, web-based image enhancement tool built with React and TypeScript. Features a dark glassmorphism UI with real-time filter previews and non-blocking export processing.
 
@@ -43,9 +43,10 @@ npm run dev
 
 ## Usage
 
-1. **Upload Image** — drag and drop into the upload area, or click **Choose File**
+1. **Upload Image** — drag and drop into the upload area, or click anywhere in the drop zone to open the file picker
 2. **Adjust** — use the sliders to tune brightness, contrast, saturation, sharpen, noise reduction, and blur in real time
-3. **Export** — set JPEG quality if needed, then click **Download Enhanced Image**; the button shows a spinner while processing
+3. **Rename** — enter a custom filename in the File Name field before saving (defaults to `enhanced-image`)
+4. **Export** — set JPEG quality if needed, then click **Download Enhanced Image**; the button shows a spinner while processing
 
 ## Technical Details
 
@@ -65,4 +66,24 @@ npm run dev
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License
+
+Copyright (c) 2026 Vivek Naskar — Enhancr
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
