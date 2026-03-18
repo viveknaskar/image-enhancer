@@ -160,7 +160,7 @@ function App() {
     if (exportFormat === 'jpg') return 'image/jpeg';
     if (exportFormat === 'png') return 'image/png';
     if (exportFormat === 'webp') return 'image/webp';
-    return ['image/png', 'image/webp', 'image/gif'].includes(imageType)
+    return ['image/png', 'image/webp', 'image/gif', 'image/avif', 'image/tiff'].includes(imageType)
       ? 'image/png'
       : 'image/jpeg';
   };
@@ -410,97 +410,95 @@ function App() {
         <div className="absolute -bottom-20 left-1/3 w-72 h-72 bg-purple-700/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 py-10">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-10">
         {/* Header */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-8">
           <div className="flex justify-center mb-3">
             <img src="/enhancr/logo.svg" alt="Enhancr" className="h-14" />
           </div>
-          <p className="mt-1 text-slate-400 text-sm">Upload an image and enhance it with real-time filters</p>
+          <p className="text-slate-400 text-sm">Upload an image and enhance it with real-time filters</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 items-start">
-          {/* ── Preview panel ── */}
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-5 flex flex-col gap-3">
-            <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Preview</p>
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              accept="image/*"
-              onChange={handleImageUpload}
-            />
+        {/* ── Upload / Preview ── */}
+        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-5 mb-5">
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept="image/jpeg,image/png,image/webp,image/gif,image/avif,image/tiff"
+            onChange={handleImageUpload}
+          />
 
-            <div
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onClick={() => fileInputRef.current?.click()}
-              className={`h-64 sm:h-80 lg:h-[420px] rounded-xl border-2 border-dashed flex items-center justify-center transition-colors duration-200 cursor-pointer overflow-hidden ${
-                isDragging
-                  ? 'border-violet-500 bg-violet-500/10'
-                  : 'border-white/10 bg-black/20 hover:border-violet-500/50 hover:bg-violet-500/5'
-              }`}
-            >
-              {selectedImage ? (
-                <img
-                  src={selectedImage}
-                  alt="Preview"
-                  className="w-full h-full object-contain rounded-xl"
-                  style={{
-                    filter: buildFilterString(),
-                    transform: getPreviewTransform(),
-                  }}
-                />
-              ) : (
-                <div className="text-center px-6 pointer-events-none">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mb-4">
-                    <Upload className="w-7 h-7 text-slate-400" />
-                  </div>
-                  <p className="text-slate-300 font-medium mb-1">Drop your image here</p>
-                  <p className="text-slate-500 text-sm mb-5">PNG, JPG, WebP, GIF supported</p>
-                  <span className="inline-block bg-violet-600 text-white text-sm font-medium px-5 py-2.5 rounded-lg">
-                    Choose File
-                  </span>
+          <div
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onClick={() => fileInputRef.current?.click()}
+            className={`h-56 sm:h-72 md:h-80 rounded-xl border-2 border-dashed flex items-center justify-center transition-colors duration-200 cursor-pointer overflow-hidden ${
+              isDragging
+                ? 'border-violet-500 bg-violet-500/10'
+                : 'border-white/10 bg-black/20 hover:border-violet-500/50 hover:bg-violet-500/5'
+            }`}
+          >
+            {selectedImage ? (
+              <img
+                src={selectedImage}
+                alt="Preview"
+                className="w-full h-full object-contain"
+                style={{ filter: buildFilterString(), transform: getPreviewTransform() }}
+              />
+            ) : (
+              <div className="text-center pointer-events-none">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mb-4">
+                  <Upload className="w-7 h-7 text-slate-400" />
                 </div>
-              )}
-            </div>
-
-            {selectedImage && (
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="text-xs text-slate-400 hover:text-violet-400 cursor-pointer transition-colors underline underline-offset-2"
-                >
-                  Replace image
-                </button>
-                {outDims && (
-                  <span className="text-xs text-slate-500 font-mono">
-                    {originalDimensions?.w} × {originalDimensions?.h}
-                    {(resizeEnabled || rotation % 180 !== 0) && (
-                      <span className="text-violet-400 ml-1">→ {outDims.w} × {outDims.h}</span>
-                    )}
-                    {' '}px
-                  </span>
-                )}
+                <p className="text-slate-300 font-medium mb-1">Drop your image here</p>
+                <p className="text-slate-500 text-sm mb-5">PNG, JPG, WebP, GIF, AVIF, TIFF supported</p>
+                <span className="inline-block bg-violet-600 text-white text-sm font-medium px-5 py-2.5 rounded-lg">
+                  Choose File
+                </span>
               </div>
             )}
           </div>
 
-          {/* ── Controls panel — single unified card ── */}
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-5 flex flex-col gap-6">
+          {selectedImage && (
+            <div className="flex items-center justify-between mt-3">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="text-xs text-slate-400 hover:text-violet-400 transition-colors underline underline-offset-2"
+              >
+                Replace image
+              </button>
+              {outDims && (
+                <span className="text-xs text-slate-500 font-mono">
+                  {originalDimensions?.w} × {originalDimensions?.h}
+                  {(resizeEnabled || rotation % 180 !== 0) && (
+                    <span className="text-violet-400 ml-1">→ {outDims.w} × {outDims.h}</span>
+                  )}
+                  {' '}px
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* ── Feature cards grid ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 items-start">
+
+          {/* Column 1: Transform + Resize */}
+          <div className="flex flex-col gap-5">
 
             {/* Transform */}
-            <div>
+            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-5">
               <SectionHeader icon={<RotateCw className="w-3.5 h-3.5" />} label="Transform" />
-              <div className="flex gap-2">
-                <IconBtn onClick={rotateLeft} title="Rotate 90° counter-clockwise">
+              <div className="grid grid-cols-4 gap-2">
+                <IconBtn onClick={rotateLeft} title="Rotate 90° left">
                   <RotateCcw className="w-4 h-4" />
-                  <span>CCW</span>
+                  <span>Left</span>
                 </IconBtn>
-                <IconBtn onClick={rotateRight} title="Rotate 90° clockwise">
+                <IconBtn onClick={rotateRight} title="Rotate 90° right">
                   <RotateCw className="w-4 h-4" />
-                  <span>CW</span>
+                  <span>Right</span>
                 </IconBtn>
                 <IconBtn onClick={() => setFlipH((v) => !v)} active={flipH} title="Flip horizontal">
                   <FlipHorizontal className="w-4 h-4" />
@@ -513,10 +511,8 @@ function App() {
               </div>
             </div>
 
-            <div className="h-px bg-white/5" />
-
             {/* Resize */}
-            <div>
+            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-4">
                 <div className="text-violet-400"><Maximize2 className="w-3.5 h-3.5" /></div>
                 <span className="text-xs font-semibold uppercase tracking-widest text-slate-400">Resize</span>
@@ -524,52 +520,39 @@ function App() {
                 <button
                   onClick={() => setResizeEnabled((v) => !v)}
                   className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
-                    resizeEnabled
-                      ? 'bg-violet-600 text-white'
-                      : 'bg-white/10 text-slate-400 hover:bg-white/15'
+                    resizeEnabled ? 'bg-violet-600 text-white' : 'bg-white/10 text-slate-400 hover:bg-white/15'
                   }`}
                 >
                   {resizeEnabled ? 'On' : 'Off'}
                 </button>
               </div>
 
-              {resizeEnabled && (
+              {resizeEnabled ? (
                 <div className="space-y-3">
                   <div className="flex items-end gap-2">
                     <div className="flex-1">
                       <label className="text-xs text-slate-500 mb-1 block">Width</label>
                       <input
-                        type="number"
-                        min={1}
-                        value={resizeWidth}
+                        type="number" min={1} value={resizeWidth}
                         onChange={(e) => handleResizeWidthChange(Number(e.target.value))}
                         className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-200 outline-none focus:border-violet-500/60 transition-colors"
                       />
                     </div>
-
                     <button
                       onClick={() => setLockAspectRatio((v) => !v)}
                       title={lockAspectRatio ? 'Unlock aspect ratio' : 'Lock aspect ratio'}
-                      className={`pb-0.5 p-2 rounded-lg transition-colors ${
-                        lockAspectRatio
-                          ? 'text-violet-400 bg-violet-500/15'
-                          : 'text-slate-500 bg-white/5 hover:bg-white/10'
-                      }`}
+                      className={`p-2 rounded-lg transition-colors ${lockAspectRatio ? 'text-violet-400 bg-violet-500/15' : 'text-slate-500 bg-white/5 hover:bg-white/10'}`}
                     >
                       {lockAspectRatio ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
                     </button>
-
                     <div className="flex-1">
                       <label className="text-xs text-slate-500 mb-1 block">Height</label>
                       <input
-                        type="number"
-                        min={1}
-                        value={resizeHeight}
+                        type="number" min={1} value={resizeHeight}
                         onChange={(e) => handleResizeHeightChange(Number(e.target.value))}
                         className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-200 outline-none focus:border-violet-500/60 transition-colors"
                       />
                     </div>
-
                     <select
                       value={resizeUnit}
                       onChange={(e) => handleUnitChange(e.target.value as ResizeUnit)}
@@ -584,13 +567,8 @@ function App() {
                     <div className="flex gap-2">
                       {(['fit', 'stretch', 'crop'] as ResizeMode[]).map((mode) => (
                         <button
-                          key={mode}
-                          onClick={() => setResizeMode(mode)}
-                          className={`flex-1 py-1.5 text-xs rounded-lg capitalize transition-colors ${
-                            resizeMode === mode
-                              ? 'bg-violet-600 text-white'
-                              : 'bg-white/5 text-slate-400 hover:bg-white/10'
-                          }`}
+                          key={mode} onClick={() => setResizeMode(mode)}
+                          className={`flex-1 py-1.5 text-xs rounded-lg capitalize transition-colors ${resizeMode === mode ? 'bg-violet-600 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
                         >
                           {mode}
                         </button>
@@ -604,39 +582,39 @@ function App() {
                     </p>
                   )}
                 </div>
+              ) : (
+                <p className="text-xs text-slate-600">Enable to set custom dimensions.</p>
               )}
             </div>
+          </div>
 
-            <div className="h-px bg-white/5" />
-
-            {/* Color Adjustments */}
-            <div>
-              <SectionHeader icon={<Sparkles className="w-3.5 h-3.5" />} label="Color Adjustments" />
-              <div className="space-y-5">
-                <SliderRow label="Brightness" value={filters.brightness} displayValue={`${filters.brightness}%`} min={0} max={200} onChange={(v) => handleFilterChange('brightness', v)} />
-                <SliderRow label="Contrast" value={filters.contrast} displayValue={`${filters.contrast}%`} min={0} max={200} onChange={(v) => handleFilterChange('contrast', v)} />
-                <SliderRow label="Saturation" value={filters.saturation} displayValue={`${filters.saturation}%`} min={0} max={200} onChange={(v) => handleFilterChange('saturation', v)} />
-                <SliderRow label="Sepia" value={filters.sepia} displayValue={`${filters.sepia}%`} min={0} max={100} onChange={(v) => handleFilterChange('sepia', v)} />
-                <SliderRow label="Grayscale" value={filters.grayscale} displayValue={`${filters.grayscale}%`} min={0} max={100} onChange={(v) => handleFilterChange('grayscale', v)} />
-              </div>
+          {/* Column 2: Color Adjustments */}
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-5">
+            <SectionHeader icon={<Sparkles className="w-3.5 h-3.5" />} label="Color Adjustments" />
+            <div className="space-y-5">
+              <SliderRow label="Brightness" value={filters.brightness} displayValue={`${filters.brightness}%`} min={0} max={200} onChange={(v) => handleFilterChange('brightness', v)} />
+              <SliderRow label="Contrast"   value={filters.contrast}   displayValue={`${filters.contrast}%`}   min={0} max={200} onChange={(v) => handleFilterChange('contrast', v)} />
+              <SliderRow label="Saturation" value={filters.saturation} displayValue={`${filters.saturation}%`} min={0} max={200} onChange={(v) => handleFilterChange('saturation', v)} />
+              <SliderRow label="Sepia"      value={filters.sepia}      displayValue={`${filters.sepia}%`}      min={0} max={100} onChange={(v) => handleFilterChange('sepia', v)} />
+              <SliderRow label="Grayscale"  value={filters.grayscale}  displayValue={`${filters.grayscale}%`}  min={0} max={100} onChange={(v) => handleFilterChange('grayscale', v)} />
             </div>
+          </div>
 
-            <div className="h-px bg-white/5" />
+          {/* Column 3: Enhancement + Export */}
+          <div className="flex flex-col gap-5 md:col-span-2 xl:col-span-1">
 
             {/* Enhancement */}
-            <div>
+            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-5">
               <SectionHeader icon={<ZoomIn className="w-3.5 h-3.5" />} label="Enhancement" />
               <div className="space-y-5">
-                <SliderRow label="Sharpen" value={filters.sharpen} displayValue={filters.sharpen.toFixed(2)} min={0} max={1} step={0.01} onChange={(v) => handleFilterChange('sharpen', v)} />
-                <SliderRow label="Noise Reduction" value={filters.denoise} displayValue={`${filters.denoise}%`} min={0} max={100} onChange={(v) => handleFilterChange('denoise', v)} />
-                <SliderRow label="Blur" value={filters.blur} displayValue={`${filters.blur}px`} min={0} max={10} step={0.1} onChange={(v) => handleFilterChange('blur', v)} />
+                <SliderRow label="Sharpen"         value={filters.sharpen} displayValue={filters.sharpen.toFixed(2)} min={0} max={1}   step={0.01} onChange={(v) => handleFilterChange('sharpen', v)} />
+                <SliderRow label="Noise Reduction" value={filters.denoise} displayValue={`${filters.denoise}%`}     min={0} max={100}            onChange={(v) => handleFilterChange('denoise', v)} />
+                <SliderRow label="Blur"            value={filters.blur}   displayValue={`${filters.blur}px`}       min={0} max={10}  step={0.1}  onChange={(v) => handleFilterChange('blur', v)} />
               </div>
             </div>
 
-            <div className="h-px bg-white/5" />
-
             {/* Export */}
-            <div>
+            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-5">
               <SectionHeader icon={<Sliders className="w-3.5 h-3.5" />} label="Export" />
               <div className="space-y-4">
                 <div>
@@ -644,13 +622,8 @@ function App() {
                   <div className="flex gap-2">
                     {(['auto', 'jpg', 'png', 'webp'] as ExportFormat[]).map((fmt) => (
                       <button
-                        key={fmt}
-                        onClick={() => setExportFormat(fmt)}
-                        className={`flex-1 py-1.5 text-xs rounded-lg uppercase font-medium transition-colors ${
-                          exportFormat === fmt
-                            ? 'bg-violet-600 text-white'
-                            : 'bg-white/5 text-slate-400 hover:bg-white/10'
-                        }`}
+                        key={fmt} onClick={() => setExportFormat(fmt)}
+                        className={`flex-1 py-1.5 text-xs rounded-lg uppercase font-medium transition-colors ${exportFormat === fmt ? 'bg-violet-600 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
                       >
                         {fmt}
                       </button>
@@ -662,35 +635,22 @@ function App() {
                   <div>
                     <p className="text-sm text-slate-300 mb-2">Background Color</p>
                     <div className="flex items-center gap-3 bg-black/20 border border-white/10 rounded-xl px-3 py-2">
-                      <input
-                        type="color"
-                        value={bgColor}
-                        onChange={(e) => setBgColor(e.target.value)}
-                        className="w-7 h-7 rounded cursor-pointer border-0 bg-transparent p-0"
-                      />
+                      <input type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)}
+                        className="w-7 h-7 rounded cursor-pointer border-0 bg-transparent p-0" />
                       <span className="text-sm text-slate-300 font-mono">{bgColor}</span>
                     </div>
                   </div>
                 )}
 
                 {showQuality && (
-                  <SliderRow
-                    label="Quality"
-                    value={filters.quality}
-                    displayValue={`${filters.quality}%`}
-                    min={1}
-                    max={100}
-                    onChange={(v) => handleFilterChange('quality', v)}
-                  />
+                  <SliderRow label="Quality" value={filters.quality} displayValue={`${filters.quality}%`} min={1} max={100} onChange={(v) => handleFilterChange('quality', v)} />
                 )}
 
                 <div>
                   <p className="text-sm text-slate-300 mb-2">File Name</p>
                   <div className="flex items-center gap-2 bg-black/20 border border-white/10 rounded-xl px-3 py-2 focus-within:border-violet-500/60 transition-colors">
                     <input
-                      type="text"
-                      value={fileName}
-                      onChange={(e) => setFileName(e.target.value)}
+                      type="text" value={fileName} onChange={(e) => setFileName(e.target.value)}
                       placeholder="enhanced-image"
                       className="flex-1 bg-transparent text-sm text-slate-200 placeholder-slate-500 outline-none"
                     />
@@ -699,52 +659,47 @@ function App() {
                 </div>
               </div>
             </div>
-
-            {/* Action buttons */}
-            <div className="flex gap-3 pt-1">
-              <button
-                onClick={() => {
-                  setFilters(DEFAULTS);
-                  setRotation(0);
-                  setFlipH(false);
-                  setFlipV(false);
-                  setResizeEnabled(false);
-                  if (originalDimensions) {
-                    setResizeWidth(originalDimensions.w);
-                    setResizeHeight(originalDimensions.h);
-                  }
-                }}
-                className="px-4 py-3 rounded-xl text-sm font-medium border border-white/10 text-slate-400 hover:text-white hover:border-white/20 transition-colors"
-              >
-                Reset
-              </button>
-
-              <button
-                onClick={downloadImage}
-                disabled={!selectedImage || isProcessing}
-                className={`flex-1 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
-                  selectedImage && !isProcessing
-                    ? 'bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-900/40'
-                    : 'bg-white/5 text-slate-600 cursor-not-allowed'
-                }`}
-              >
-                {isProcessing ? (
-                  <>
-                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                    </svg>
-                    Processing…
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-4 h-4" />
-                    Download Image
-                  </>
-                )}
-              </button>
-            </div>
           </div>
+        </div>
+
+        {/* ── Action buttons ── */}
+        <div className="flex gap-3 mt-5">
+          <button
+            onClick={() => {
+              setFilters(DEFAULTS);
+              setRotation(0); setFlipH(false); setFlipV(false);
+              setResizeEnabled(false);
+              if (originalDimensions) { setResizeWidth(originalDimensions.w); setResizeHeight(originalDimensions.h); }
+            }}
+            className="px-5 py-3 rounded-xl text-sm font-medium border border-white/10 text-slate-400 hover:text-white hover:border-white/20 transition-colors"
+          >
+            Reset
+          </button>
+
+          <button
+            onClick={downloadImage}
+            disabled={!selectedImage || isProcessing}
+            className={`flex-1 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
+              selectedImage && !isProcessing
+                ? 'bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-900/40'
+                : 'bg-white/5 text-slate-600 cursor-not-allowed'
+            }`}
+          >
+            {isProcessing ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                </svg>
+                Processing…
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4" />
+                Download Image
+              </>
+            )}
+          </button>
         </div>
       </div>
     </div>
