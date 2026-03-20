@@ -18,11 +18,14 @@ export default tseslint.config(
       'react-refresh': reactRefresh,
     },
     rules: {
-      ...reactHooks.configs.recommended.rules,
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },
       ],
+      // Disabled due to incompatibility between typescript-eslint@8.8.1 and ESLint 9.39.4
+      '@typescript-eslint/no-unused-expressions': 'off',
     },
   }
 );

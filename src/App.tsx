@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   Upload, Sliders, Download, ZoomIn, Sparkles,
   RotateCcw, RotateCw, FlipHorizontal, FlipVertical,
@@ -64,6 +64,7 @@ function SliderRow({
         max={max}
         step={step ?? 1}
         value={value}
+        aria-label={label}
         onChange={(e) => onChange(Number(e.target.value))}
       />
     </div>
@@ -95,6 +96,7 @@ function IconBtn({
     <button
       onClick={onClick}
       title={title}
+      aria-label={title}
       className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl text-xs transition-colors ${
         active
           ? 'bg-violet-600 text-white'
@@ -113,6 +115,11 @@ function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const activeWorkerRef = useRef<Worker | null>(null);
+
+  useEffect(() => {
+    return () => { activeWorkerRef.current?.terminate(); };
+  }, []);
 
   // Filters
   const [filters, setFilters] = useState<FilterState>(DEFAULTS);
@@ -218,7 +225,14 @@ function App() {
         setResizeWidth(img.width);
         setResizeHeight(img.height);
       };
+      img.onerror = () => {
+        setSelectedImage(null);
+        alert('Failed to load image. The file may be corrupted or unsupported.');
+      };
       img.src = src;
+    };
+    reader.onerror = () => {
+      alert('Failed to read the file. Please try again.');
     };
     reader.readAsDataURL(file);
   };
@@ -298,11 +312,18 @@ function App() {
   // ── Denoise worker ─────────────────────────────────────────────────────────
 
   const applyDenoiseInWorker = (imageData: ImageData, strength: number): Promise<ImageData> =>
-    new Promise((resolve) => {
+    new Promise((resolve, reject) => {
       const worker = new Worker(new URL('./denoise.worker.ts', import.meta.url), { type: 'module' });
+      activeWorkerRef.current = worker;
       worker.onmessage = (e) => {
+        activeWorkerRef.current = null;
         resolve(new ImageData(e.data.data, imageData.width, imageData.height));
         worker.terminate();
+      };
+      worker.onerror = (e) => {
+        activeWorkerRef.current = null;
+        worker.terminate();
+        reject(e);
       };
       const copy = new Uint8ClampedArray(imageData.data);
       worker.postMessage({ data: copy, width: imageData.width, height: imageData.height, strength }, [copy.buffer]);
@@ -317,6 +338,11 @@ function App() {
     const canvas = document.createElement('canvas');
     const img = new Image();
     img.src = selectedImage;
+
+    img.onerror = () => {
+      setIsProcessing(false);
+      alert('Failed to process the image. Please try again.');
+    };
 
     img.onload = async () => {
       // Compute source crop region and output size
@@ -352,7 +378,12 @@ function App() {
       canvas.width = isSwapped ? outH : outW;
       canvas.height = isSwapped ? outW : outH;
 
-      const ctx = canvas.getContext('2d')!;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        setIsProcessing(false);
+        alert('Failed to initialize canvas. Try a smaller image or refresh the page.');
+        return;
+      }
 
       // Background fill for JPEG (no alpha)
       const mime = getOutputMimeType();
@@ -374,9 +405,15 @@ function App() {
 
       // Denoise
       if (filters.denoise > 0) {
-        const id = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const denoised = await applyDenoiseInWorker(id, filters.denoise / 100);
-        ctx.putImageData(denoised, 0, 0);
+        try {
+          const id = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const denoised = await applyDenoiseInWorker(id, filters.denoise / 100);
+          ctx.putImageData(denoised, 0, 0);
+        } catch {
+          setIsProcessing(false);
+          alert('Noise reduction failed. The image will be exported without it.');
+          return;
+        }
       }
 
       // Export
@@ -635,8 +672,12 @@ function App() {
                   <div>
                     <p className="text-sm text-slate-300 mb-2">Background Color</p>
                     <div className="flex items-center gap-3 bg-black/20 border border-white/10 rounded-xl px-3 py-2">
-                      <input type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)}
-                        className="w-7 h-7 rounded cursor-pointer border-0 bg-transparent p-0" />
+                      <label className="flex items-center gap-3">
+                        <span className="sr-only">Background Color</span>
+                        <input type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)}
+                          aria-label="Background color"
+                          className="w-7 h-7 rounded cursor-pointer border-0 bg-transparent p-0" />
+                      </label>
                       <span className="text-sm text-slate-300 font-mono">{bgColor}</span>
                     </div>
                   </div>
@@ -687,7 +728,7 @@ function App() {
           >
             {isProcessing ? (
               <>
-                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" role="status" aria-label="Processing">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                 </svg>
