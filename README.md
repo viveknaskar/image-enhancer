@@ -1,5 +1,7 @@
 # Enhancr
 
+![enhancr](public/og-image.svg)
+
 ![Visitors](https://visitor-badge.laobi.icu/badge?page_id=viveknaskar.enhancr)
 
 A browser-based image editor with real-time filter previews, visual crop, transforms, and non-blocking export. No uploads, no server, everything runs locally in your browser.
