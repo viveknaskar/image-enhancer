@@ -13,7 +13,7 @@ export function SliderRow({ label, value, displayValue, min, max, step, defaultV
   const isModified = defaultValue !== undefined && value !== defaultValue;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 group">
       <div className="flex items-center justify-between">
         <span className="text-sm text-slate-300">{label}</span>
         <div className="flex items-center gap-1.5">
@@ -21,8 +21,8 @@ export function SliderRow({ label, value, displayValue, min, max, step, defaultV
             onClick={() => onChange(defaultValue!)}
             title="Reset to default"
             aria-label={`Reset ${label} to default`}
-            className={`text-base leading-none text-slate-400 hover:text-violet-400 transition-all duration-150 ${
-              isModified ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            className={`text-base leading-none text-slate-400 hover:text-violet-400 transition-opacity duration-150 opacity-0 ${
+              isModified ? 'group-hover:opacity-100' : 'pointer-events-none'
             }`}
           >
             ↺
