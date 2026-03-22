@@ -1,6 +1,6 @@
 # Enhancr
 
-![Visitors](https://visitor-badge.laobi.icu/badge?page_id=viveknaskar.enhancr) ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Visitors](https://visitor-badge.laobi.icu/badge?page_id=viveknaskar.enhancr) ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg) [![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink?logo=github)](https://github.com/sponsors/viveknaskar)
 
 ![enhancr](public/og-image.svg)
 
