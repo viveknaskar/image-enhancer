@@ -5,7 +5,7 @@ import {
   Lock, Unlock, Maximize2, Crop,
 } from 'lucide-react';
 
-import { ExportFormat, ResizeMode } from './types';
+import { ExportFormat, ResizeMode, FILTER_DEFAULTS } from './types';
 import { useFilters } from './hooks/useFilters';
 import { useTransform } from './hooks/useTransform';
 import { useResize } from './hooks/useResize';
@@ -21,6 +21,7 @@ function App() {
   const [imageType, setImageType] = useState('image/jpeg');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'transform' | 'color' | 'enhancement'>('transform');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const activeWorkerRef = useRef<Worker | null>(null);
@@ -318,11 +319,33 @@ function App() {
           )}
         </div>
 
+        {/* ── Mobile tab bar (hidden on md+) ── */}
+        <div className="md:hidden flex rounded-xl bg-white/5 border border-white/10 p-1 mb-3 gap-1">
+          {([
+            { id: 'transform',   label: 'Transform',   icon: <RotateCw className="w-3.5 h-3.5" /> },
+            { id: 'color',       label: 'Colors',      icon: <Sparkles className="w-3.5 h-3.5" /> },
+            { id: 'enhancement', label: 'Enhancement', icon: <ZoomIn className="w-3.5 h-3.5" /> },
+          ] as const).map(({ id, label, icon }) => (
+            <button
+              key={id}
+              onClick={() => setMobileTab(id)}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                mobileTab === id
+                  ? 'bg-violet-600 text-white'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              {icon}
+              {label}
+            </button>
+          ))}
+        </div>
+
         {/* ── Feature cards grid ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 items-start">
 
           {/* Column 1: Transform + Resize */}
-          <div className="flex flex-col gap-5">
+          <div className={`flex flex-col gap-5 md:flex ${mobileTab === 'transform' ? 'flex' : 'hidden'}`}>
 
             {/* Transform */}
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-5">
@@ -444,27 +467,27 @@ function App() {
           </div>
 
           {/* Column 2: Color Adjustments */}
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-5">
+          <div className={`bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-5 md:block ${mobileTab === 'color' ? 'block' : 'hidden'}`}>
             <SectionHeader icon={<Sparkles className="w-3.5 h-3.5" />} label="Color Adjustments" />
             <div className="space-y-5">
-              <SliderRow label="Brightness" value={filters.filters.brightness} displayValue={`${filters.filters.brightness}%`} min={0} max={200} onChange={(v) => filters.setFilter('brightness', v)} />
-              <SliderRow label="Contrast"   value={filters.filters.contrast}   displayValue={`${filters.filters.contrast}%`}   min={0} max={200} onChange={(v) => filters.setFilter('contrast', v)} />
-              <SliderRow label="Saturation" value={filters.filters.saturation} displayValue={`${filters.filters.saturation}%`} min={0} max={200} onChange={(v) => filters.setFilter('saturation', v)} />
-              <SliderRow label="Sepia"      value={filters.filters.sepia}      displayValue={`${filters.filters.sepia}%`}      min={0} max={100} onChange={(v) => filters.setFilter('sepia', v)} />
-              <SliderRow label="Grayscale"  value={filters.filters.grayscale}  displayValue={`${filters.filters.grayscale}%`}  min={0} max={100} onChange={(v) => filters.setFilter('grayscale', v)} />
+              <SliderRow label="Brightness" value={filters.filters.brightness} displayValue={`${filters.filters.brightness}%`} min={0} max={200} defaultValue={FILTER_DEFAULTS.brightness} onChange={(v) => filters.setFilter('brightness', v)} />
+              <SliderRow label="Contrast"   value={filters.filters.contrast}   displayValue={`${filters.filters.contrast}%`}   min={0} max={200} defaultValue={FILTER_DEFAULTS.contrast}   onChange={(v) => filters.setFilter('contrast', v)} />
+              <SliderRow label="Saturation" value={filters.filters.saturation} displayValue={`${filters.filters.saturation}%`} min={0} max={200} defaultValue={FILTER_DEFAULTS.saturation} onChange={(v) => filters.setFilter('saturation', v)} />
+              <SliderRow label="Sepia"      value={filters.filters.sepia}      displayValue={`${filters.filters.sepia}%`}      min={0} max={100} defaultValue={FILTER_DEFAULTS.sepia}      onChange={(v) => filters.setFilter('sepia', v)} />
+              <SliderRow label="Grayscale"  value={filters.filters.grayscale}  displayValue={`${filters.filters.grayscale}%`}  min={0} max={100} defaultValue={FILTER_DEFAULTS.grayscale}  onChange={(v) => filters.setFilter('grayscale', v)} />
             </div>
           </div>
 
           {/* Column 3: Enhancement + Export */}
-          <div className="flex flex-col gap-5 md:col-span-2 xl:col-span-1">
+          <div className={`flex-col gap-5 md:col-span-2 xl:col-span-1 md:flex ${mobileTab === 'enhancement' ? 'flex' : 'hidden'}`}>
 
             {/* Enhancement */}
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-5">
               <SectionHeader icon={<ZoomIn className="w-3.5 h-3.5" />} label="Enhancement" />
               <div className="space-y-5">
-                <SliderRow label="Sharpen"         value={filters.filters.sharpen} displayValue={filters.filters.sharpen.toFixed(2)} min={0} max={1}   step={0.01} onChange={(v) => filters.setFilter('sharpen', v)} />
-                <SliderRow label="Noise Reduction" value={filters.filters.denoise} displayValue={`${filters.filters.denoise}%`}     min={0} max={100}            onChange={(v) => filters.setFilter('denoise', v)} />
-                <SliderRow label="Blur"            value={filters.filters.blur}   displayValue={`${filters.filters.blur}px`}       min={0} max={10}  step={0.1}  onChange={(v) => filters.setFilter('blur', v)} />
+                <SliderRow label="Sharpen"         value={filters.filters.sharpen} displayValue={filters.filters.sharpen.toFixed(2)} min={0} max={1}   step={0.01} defaultValue={FILTER_DEFAULTS.sharpen} onChange={(v) => filters.setFilter('sharpen', v)} />
+                <SliderRow label="Noise Reduction" value={filters.filters.denoise} displayValue={`${filters.filters.denoise}%`}     min={0} max={100}            defaultValue={FILTER_DEFAULTS.denoise} onChange={(v) => filters.setFilter('denoise', v)} />
+                <SliderRow label="Blur"            value={filters.filters.blur}   displayValue={`${filters.filters.blur}px`}       min={0} max={10}  step={0.1}  defaultValue={FILTER_DEFAULTS.blur}    onChange={(v) => filters.setFilter('blur', v)} />
               </div>
             </div>
 
@@ -506,7 +529,7 @@ function App() {
                 )}
 
                 {showQuality && (
-                  <SliderRow label="Quality" value={filters.filters.quality} displayValue={`${filters.filters.quality}%`} min={1} max={100} onChange={(v) => filters.setFilter('quality', v)} />
+                  <SliderRow label="Quality" value={filters.filters.quality} displayValue={`${filters.filters.quality}%`} min={1} max={100} defaultValue={FILTER_DEFAULTS.quality} onChange={(v) => filters.setFilter('quality', v)} />
                 )}
 
                 <div>
