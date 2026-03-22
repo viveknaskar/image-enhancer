@@ -1,5 +1,5 @@
 import { useRef, useState, useLayoutEffect, useCallback } from 'react';
-import type { MouseEvent } from 'react';
+import type { PointerEvent } from 'react';
 import { CropRect, CropHandle } from '../types';
 import { ImageBounds } from '../hooks/useCrop';
 
@@ -7,9 +7,9 @@ interface CropOverlayProps {
   crop: CropRect;
   naturalWidth: number;
   naturalHeight: number;
-  onHandleMouseDown: (handle: CropHandle, e: MouseEvent) => void;
-  onMouseMove: (e: MouseEvent, bounds: ImageBounds) => void;
-  onMouseUp: () => void;
+  onHandlePointerDown: (handle: CropHandle, e: PointerEvent) => void;
+  onPointerMove: (e: PointerEvent, bounds: ImageBounds) => void;
+  onPointerUp: () => void;
   isDragging: boolean;
 }
 
@@ -44,7 +44,7 @@ function getImageBounds(container: HTMLDivElement, natW: number, natH: number): 
 
 export function CropOverlay({
   crop, naturalWidth, naturalHeight,
-  onHandleMouseDown, onMouseMove, onMouseUp, isDragging,
+  onHandlePointerDown, onPointerMove, onPointerUp, isDragging,
 }: CropOverlayProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [bounds, setBounds] = useState<ImageBounds>({ x: 0, y: 0, w: 0, h: 0 });
@@ -59,9 +59,9 @@ export function CropOverlay({
     return () => ro.disconnect();
   }, [naturalWidth, naturalHeight]);
 
-  const handleMouseMove = useCallback((e: MouseEvent<HTMLDivElement>) => {
-    onMouseMove(e, bounds);
-  }, [onMouseMove, bounds]);
+  const handlePointerMove = useCallback((e: PointerEvent<HTMLDivElement>) => {
+    onPointerMove(e, bounds);
+  }, [onPointerMove, bounds]);
 
   // Crop box position/size in px within the container
   const boxLeft   = bounds.x + crop.x * bounds.w;
@@ -73,10 +73,10 @@ export function CropOverlay({
     <div
       ref={containerRef}
       className="absolute inset-0 select-none"
-      style={{ cursor: isDragging ? 'crosshair' : 'default' }}
-      onMouseMove={handleMouseMove}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseUp}
+      style={{ cursor: isDragging ? 'crosshair' : 'default', touchAction: 'none' }}
+      onPointerMove={handlePointerMove}
+      onPointerUp={onPointerUp}
+      onPointerLeave={onPointerUp}
     >
       {/* Dark overlay outside the crop box via box-shadow */}
       <div
@@ -90,8 +90,9 @@ export function CropOverlay({
           border: '1.5px solid rgba(255,255,255,0.85)',
           boxSizing: 'content-box',
           cursor: 'move',
+          touchAction: 'none',
         }}
-        onMouseDown={(e) => onHandleMouseDown('move', e)}
+        onPointerDown={(e) => onHandlePointerDown('move', e)}
       >
         {/* Rule-of-thirds grid */}
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
@@ -105,14 +106,14 @@ export function CropOverlay({
         {HANDLES.map((handle) => (
           <div
             key={handle}
-            onMouseDown={(e) => { e.stopPropagation(); onHandleMouseDown(handle, e); }}
+            onPointerDown={(e) => { e.stopPropagation(); onHandlePointerDown(handle, e); }}
             style={{
               position: 'absolute',
               left: HANDLE_POS[handle].left,
               top: HANDLE_POS[handle].top,
               transform: 'translate(-50%, -50%)',
-              width: 10,
-              height: 10,
+              width: 20,
+              height: 20,
               background: 'white',
               border: '2px solid #7c3aed',
               borderRadius: 2,

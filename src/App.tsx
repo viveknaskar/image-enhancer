@@ -276,9 +276,9 @@ function App() {
                     crop={cropTool.crop}
                     naturalWidth={resize.originalDimensions.w}
                     naturalHeight={resize.originalDimensions.h}
-                    onHandleMouseDown={cropTool.onHandleMouseDown}
-                    onMouseMove={cropTool.onMouseMove}
-                    onMouseUp={cropTool.onMouseUp}
+                    onHandlePointerDown={cropTool.onHandlePointerDown}
+                    onPointerMove={cropTool.onPointerMove}
+                    onPointerUp={cropTool.onPointerUp}
                     isDragging={cropTool.isDragging}
                   />
                 )}

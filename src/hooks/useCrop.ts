@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import type { MouseEvent } from 'react';
+import type { PointerEvent } from 'react';
 import { CropRect, CropHandle, DEFAULT_CROP } from '../types';
 
 const MIN_SIZE = 0.02;
@@ -35,15 +35,16 @@ export function useCrop() {
     setCropMode(false);
   }, [setCrop]);
 
-  const onHandleMouseDown = useCallback((handle: CropHandle, e: MouseEvent) => {
+  const onHandlePointerDown = useCallback((handle: CropHandle, e: PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     dragging.current = handle;
     dragStart.current = { mx: e.clientX, my: e.clientY, crop: { ...cropRef.current } };
     setIsDragging(true);
   }, []);
 
-  const onMouseMove = useCallback((e: MouseEvent, imageBounds: ImageBounds) => {
+  const onPointerMove = useCallback((e: PointerEvent, imageBounds: ImageBounds) => {
     if (!dragging.current || !dragStart.current || imageBounds.w === 0 || imageBounds.h === 0) return;
 
     const fdx = (e.clientX - dragStart.current.mx) / imageBounds.w;
@@ -77,11 +78,11 @@ export function useCrop() {
     setCrop({ x, y, w, h });
   }, [setCrop]);
 
-  const onMouseUp = useCallback(() => {
+  const onPointerUp = useCallback(() => {
     dragging.current = null;
     dragStart.current = null;
     setIsDragging(false);
   }, []);
 
-  return { cropMode, toggleCropMode, crop, resetCrop, onHandleMouseDown, onMouseMove, onMouseUp, isDragging };
+  return { cropMode, toggleCropMode, crop, resetCrop, onHandlePointerDown, onPointerMove, onPointerUp, isDragging };
 }
