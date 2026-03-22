@@ -1,6 +1,6 @@
 # Contributing to Enhancr
 
-Thank you for your interest in contributing! All contributions — bug reports, feature requests, and pull requests — are welcome.
+Thank you for your interest in contributing! All contributions, bug reports, feature requests, and pull requests, are welcome.
 
 ## Getting Started
 
