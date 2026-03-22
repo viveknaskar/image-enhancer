@@ -52,6 +52,10 @@ Open http://localhost:5173 in your browser.
 - Canvas API for full-resolution, single-pass export (crop + resize + rotate + filter in one `drawImage` call)
 - Web Workers API for off-thread noise reduction
 
+## Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on reporting bugs, requesting features, and submitting pull requests.
+
 ## License
 
 MIT © 2026 Vivek Naskar
