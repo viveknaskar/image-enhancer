@@ -30,3 +30,20 @@ export const FILTER_DEFAULTS: FilterState = {
 export const TRANSPARENT_MIME_TYPES = new Set([
   'image/png', 'image/webp', 'image/gif', 'image/avif', 'image/tiff',
 ]);
+
+/** Crop region stored as fractions (0–1) of the image's natural dimensions. */
+export interface CropRect {
+  x: number; // left edge  [0, 1)
+  y: number; // top edge   [0, 1)
+  w: number; // width      (0, 1]
+  h: number; // height     (0, 1]
+}
+
+export const DEFAULT_CROP: CropRect = { x: 0, y: 0, w: 1, h: 1 };
+
+/** The 8 resize handles plus 'move' for the crop-box body drag. */
+export type CropHandle =
+  | 'nw' | 'n' | 'ne'
+  | 'w'          | 'e'
+  | 'sw' | 's' | 'se'
+  | 'move';

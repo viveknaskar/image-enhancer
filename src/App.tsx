@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import {
   Upload, Sliders, Download, ZoomIn, Sparkles,
   RotateCcw, RotateCw, FlipHorizontal, FlipVertical,
-  Lock, Unlock, Maximize2,
+  Lock, Unlock, Maximize2, Crop,
 } from 'lucide-react';
 
 import { ExportFormat, ResizeMode } from './types';
@@ -10,9 +10,11 @@ import { useFilters } from './hooks/useFilters';
 import { useTransform } from './hooks/useTransform';
 import { useResize } from './hooks/useResize';
 import { useExport } from './hooks/useExport';
+import { useCrop } from './hooks/useCrop';
 import { SliderRow } from './components/SliderRow';
 import { SectionHeader } from './components/SectionHeader';
 import { IconBtn } from './components/IconBtn';
+import { CropOverlay } from './components/CropOverlay';
 
 function App() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -31,6 +33,7 @@ function App() {
   const transform = useTransform();
   const resize = useResize();
   const exportSettings = useExport(imageType);
+  const cropTool = useCrop();
 
   const outDims = useMemo(
     () => resize.getOutputDimensions(transform.rotation),
@@ -47,6 +50,7 @@ function App() {
   const loadImageFromFile = useCallback((file: File) => {
     setImageType(file.type);
     transform.reset();
+    cropTool.resetCrop();
 
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -64,7 +68,7 @@ function App() {
       alert('Failed to read the file. Please try again.');
     };
     reader.readAsDataURL(file);
-  }, [transform, resize]);
+  }, [transform, resize, cropTool]);
 
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -121,30 +125,37 @@ function App() {
     };
 
     img.onload = async () => {
-      let srcX = 0, srcY = 0, srcW = img.width, srcH = img.height;
-      let outW = img.width, outH = img.height;
+      // Apply the user's crop selection (fractional → native pixels).
+      // When crop mode is off, crop is DEFAULT_CROP {0,0,1,1} — a no-op.
+      const cX = Math.round(cropTool.crop.x * img.width);
+      const cY = Math.round(cropTool.crop.y * img.height);
+      const cW = Math.round(cropTool.crop.w * img.width);
+      const cH = Math.round(cropTool.crop.h * img.height);
+
+      let srcX = 0, srcY = 0, srcW = cW, srcH = cH;
+      let outW = cW, outH = cH;
 
       if (resize.enabled) {
         if (resize.unit === '%') {
-          outW = Math.round(img.width * resize.width / 100);
-          outH = Math.round(img.height * resize.height / 100);
+          outW = Math.round(cW * resize.width / 100);
+          outH = Math.round(cH * resize.height / 100);
         } else {
-          const tw = resize.width || img.width;
-          const th = resize.height || img.height;
+          const tw = resize.width || cW;
+          const th = resize.height || cH;
           if (resize.mode === 'stretch') {
             outW = tw; outH = th;
           } else if (resize.mode === 'fit') {
-            const scale = Math.min(tw / img.width, th / img.height);
-            outW = Math.round(img.width * scale);
-            outH = Math.round(img.height * scale);
+            const scale = Math.min(tw / cW, th / cH);
+            outW = Math.round(cW * scale);
+            outH = Math.round(cH * scale);
           } else {
-            // crop: scale to fill, then center-crop
+            // resize crop: scale to fill, then center-crop within the user-cropped region
             outW = tw; outH = th;
-            const scale = Math.max(tw / img.width, th / img.height);
-            srcW = tw / scale;
-            srcH = th / scale;
-            srcX = (img.width - srcW) / 2;
-            srcY = (img.height - srcH) / 2;
+            const scale = Math.max(tw / cW, th / cH);
+            srcW = cW / scale;
+            srcH = cH / scale;
+            srcX = (cW - srcW) / 2;
+            srcY = (cH - srcH) / 2;
           }
         }
       }
@@ -174,7 +185,7 @@ function App() {
       if (transform.flipH) ctx.scale(-1, 1);
       if (transform.flipV) ctx.scale(1, -1);
       ctx.filter = filters.filterString;
-      ctx.drawImage(img, srcX, srcY, srcW, srcH, -outW / 2, -outH / 2, outW, outH);
+      ctx.drawImage(img, cX + srcX, cY + srcY, srcW, srcH, -outW / 2, -outH / 2, outW, outH);
       ctx.filter = 'none';
       ctx.restore();
 
@@ -200,7 +211,7 @@ function App() {
       link.click();
       setIsProcessing(false);
     };
-  }, [selectedImage, resize, transform, filters, exportSettings, applyDenoiseInWorker]);
+  }, [selectedImage, resize, transform, filters, exportSettings, applyDenoiseInWorker, cropTool]);
 
   // ── Reset all ──────────────────────────────────────────────────────────────
 
@@ -208,7 +219,8 @@ function App() {
     filters.reset();
     transform.reset();
     resize.reset();
-  }, [filters, transform, resize]);
+    cropTool.resetCrop();
+  }, [filters, transform, resize, cropTool]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -244,20 +256,33 @@ function App() {
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            onClick={() => fileInputRef.current?.click()}
-            className={`h-56 sm:h-72 md:h-80 rounded-xl border-2 border-dashed flex items-center justify-center transition-colors duration-200 cursor-pointer overflow-hidden ${
-              isDragging
-                ? 'border-violet-500 bg-violet-500/10'
-                : 'border-white/10 bg-black/20 hover:border-violet-500/50 hover:bg-violet-500/5'
+            onClick={() => { if (!cropTool.cropMode) fileInputRef.current?.click(); }}
+            className={`relative h-56 sm:h-72 md:h-80 rounded-xl border-2 border-dashed flex items-center justify-center transition-colors duration-200 overflow-hidden ${
+              cropTool.cropMode
+                ? 'border-violet-500 cursor-default'
+                : `cursor-pointer ${isDragging ? 'border-violet-500 bg-violet-500/10' : 'border-white/10 bg-black/20 hover:border-violet-500/50 hover:bg-violet-500/5'}`
             }`}
           >
             {selectedImage ? (
-              <img
-                src={selectedImage}
-                alt="Preview"
-                className="w-full h-full object-contain"
-                style={{ filter: filters.filterString, transform: transform.previewTransform }}
-              />
+              <>
+                <img
+                  src={selectedImage}
+                  alt="Preview"
+                  className="w-full h-full object-contain"
+                  style={{ filter: filters.filterString, transform: transform.previewTransform }}
+                />
+                {cropTool.cropMode && resize.originalDimensions && (
+                  <CropOverlay
+                    crop={cropTool.crop}
+                    naturalWidth={resize.originalDimensions.w}
+                    naturalHeight={resize.originalDimensions.h}
+                    onHandleMouseDown={cropTool.onHandleMouseDown}
+                    onMouseMove={cropTool.onMouseMove}
+                    onMouseUp={cropTool.onMouseUp}
+                    isDragging={cropTool.isDragging}
+                  />
+                )}
+              </>
             ) : (
               <div className="text-center pointer-events-none">
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mb-4">
@@ -319,6 +344,25 @@ function App() {
                   <FlipVertical className="w-4 h-4" />
                   <span>Flip V</span>
                 </IconBtn>
+              </div>
+
+              {/* Crop toggle */}
+              <div className="mt-2 border-t border-white/5 pt-3">
+                <IconBtn
+                  onClick={cropTool.toggleCropMode}
+                  active={cropTool.cropMode}
+                  title="Crop image"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <Crop className="w-4 h-4" />
+                    <span>{cropTool.cropMode ? 'Exit Crop' : 'Crop'}</span>
+                  </div>
+                </IconBtn>
+                {cropTool.cropMode && (
+                  <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                    Drag the box or handles to select a region. Click Download to apply.
+                  </p>
+                )}
               </div>
             </div>
 

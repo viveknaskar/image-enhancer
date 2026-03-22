@@ -20,44 +20,36 @@ export function useResize() {
 
   const reset = useCallback(() => {
     setEnabled(false);
-    setOriginalDimensions((dims) => {
-      if (dims) { setWidth(dims.w); setHeight(dims.h); }
-      return dims;
-    });
-  }, []);
+    if (originalDimensions) {
+      setWidth(originalDimensions.w);
+      setHeight(originalDimensions.h);
+    }
+  }, [originalDimensions]);
 
   const handleWidthChange = useCallback((val: number) => {
     setWidth(val);
-    setOriginalDimensions((dims) => {
-      if (lockAspect && dims && val > 0) {
-        setHeight(unit === '%' ? val : Math.round((val * dims.h) / dims.w));
-      }
-      return dims;
-    });
-  }, [lockAspect, unit]);
+    if (lockAspect && originalDimensions && val > 0) {
+      setHeight(unit === '%' ? val : Math.round((val * originalDimensions.h) / originalDimensions.w));
+    }
+  }, [lockAspect, originalDimensions, unit]);
 
   const handleHeightChange = useCallback((val: number) => {
     setHeight(val);
-    setOriginalDimensions((dims) => {
-      if (lockAspect && dims && val > 0) {
-        setWidth(unit === '%' ? val : Math.round((val * dims.w) / dims.h));
-      }
-      return dims;
-    });
-  }, [lockAspect, unit]);
+    if (lockAspect && originalDimensions && val > 0) {
+      setWidth(unit === '%' ? val : Math.round((val * originalDimensions.w) / originalDimensions.h));
+    }
+  }, [lockAspect, originalDimensions, unit]);
 
   const handleUnitChange = useCallback((newUnit: ResizeUnit) => {
     setUnit(newUnit);
     if (newUnit === '%') {
       setWidth(100);
       setHeight(100);
-    } else {
-      setOriginalDimensions((dims) => {
-        if (dims) { setWidth(dims.w); setHeight(dims.h); }
-        return dims;
-      });
+    } else if (originalDimensions) {
+      setWidth(originalDimensions.w);
+      setHeight(originalDimensions.h);
     }
-  }, []);
+  }, [originalDimensions]);
 
   const getOutputDimensions = useCallback((rotation: number) => {
     if (!originalDimensions) return null;
